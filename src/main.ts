@@ -1,4 +1,8 @@
-import path from "path";
+// Obligatorisk innlevering 1 i Videregående programmering
+// Høgskolen i Molde våren 2024
+// Server til en bridge-robot
+// Tor Erik Fredrikstad og Evi Sandbakken
+
 import express,
 { Express, NextFunction, Request, Response } from "express";
 import { Card, createDeck, shuffleDeck } from './deck';
@@ -33,10 +37,17 @@ function distributeCards(players: Player[], deck: Card[]) {
     for (let i = 0; i < deck.length; i++) {
         players[i % playerCount].hand.push(deck[i]);
     }
+} 
+
+function isBidValid(bid: string): boolean{
+    const pattern = /^(?:[1-7](?:S|H|D|C|NT)|pass)$/;
+    if(!pattern.test(bid)) return false;
+    return true;
 }
 
 let players: Player[] = [];
 
+// Registrer en spiller med navn
 app.post('/register', (req, res) => {
 const { name } = req.body;
 
@@ -54,3 +65,36 @@ players.push(newPlayer);
 res.status(201).json(newPlayer);
 });
 
+// Del ut kort og start spillet
+app.post('/start', (req, res) => {
+    const deck = shuffleDeck(createDeck());
+    distributeCards(players, deck);
+    res.send('Spill startet, kort er delt ut!');
+});
+
+// Vis kortene til spilleren
+app.get('/players/:playerId/cards', (req, res) => {
+const { playerId } = req.params;
+const player = players.find(p => p.id === playerId);
+
+if (!player) {
+    return res.status(404).send('Player not found');
+}
+
+res.json(player.hand);
+});
+
+// Legg inn bud
+app.post('/bid', (req, res) => {
+    const { playerId, bid } = req.body;
+
+    // Sjekk om budet faller utenfor det forventede regelsettet
+    if (!isBidValid(bid)) {
+        // Hvis budet ikke er gyldig, be om forklaring fra makkeren
+        //waitForExplanation(playerId);
+        return res.status(200).send("Bid not valid.");
+    }
+
+    // Fortsett med spillets normale flyt
+    res.status(200).send("Bid accepted.");
+});
