@@ -1,10 +1,15 @@
 "use strict";
+// Obligatorisk innlevering 1 i Videregående programmering
+// Høgskolen i Molde våren 2024
+// Server til en bridge-robot
+// Tor Erik Fredrikstad og Evi Sandbakken
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const deck_1 = require("./deck");
+const bids_1 = require("./bids");
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3000;
 // Middleware to parse JSON bodies
@@ -15,7 +20,7 @@ app.get('/', (req, res) => {
 });
 // Start server
 app.listen(PORT, () => {
-    console.log(`Bridge-server kjører på port ${PORT}`);
+    console.log('Bridge-server kjører på port ${PORT}');
 });
 function distributeCards(players, deck) {
     const playerCount = players.length;
@@ -23,11 +28,6 @@ function distributeCards(players, deck) {
     for (let i = 0; i < deck.length; i++) {
         players[i % playerCount].hand.push(deck[i]);
     }
-}
-function isBidValid(bid) {
-    // Regular expression to match the pattern
-    const pattern = /^[1-7] (spades|hearts|diamonds|clubs|NT)$/;
-    return pattern.test(bid);
 }
 let players = [];
 // Registrer en spiller med navn
@@ -59,15 +59,9 @@ app.get('/players/:playerId/cards', (req, res) => {
     }
     res.json(player.hand);
 });
+// Legg inn bud
 app.post('/bid', (req, res) => {
     const { playerId, bid } = req.body;
-    // Sjekk om budet faller utenfor det forventede regelsettet
-    if (!isBidValid(bid)) {
-        // Hvis budet ikke er gyldig, be om forklaring fra makkeren
-        //waitForExplanation(playerId);
-        return res.status(200).send("Waiting for partner's explanation.");
-    }
-    // Fortsett med spillets normale flyt
-    res.status(200).send("Bid accepted.");
+    return res.status(200).send((0, bids_1.isValidBid)(bid));
 });
 //# sourceMappingURL=main.js.map

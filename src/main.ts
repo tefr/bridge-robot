@@ -6,6 +6,7 @@
 import express,
 { Express, NextFunction, Request, Response } from "express";
 import { Card, createDeck, shuffleDeck } from './deck';
+import { isValidBid } from './bids';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,7 +21,7 @@ app.get('/', (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Bridge-server kjører på port ${PORT}`);
+  console.log('Bridge-server kjører på port ${PORT}');
 });
 
 // Spillerregistrering
@@ -37,12 +38,6 @@ function distributeCards(players: Player[], deck: Card[]) {
     for (let i = 0; i < deck.length; i++) {
         players[i % playerCount].hand.push(deck[i]);
     }
-} 
-
-function isBidValid(bid: string): boolean{
-    const pattern = /^(?:[1-7](?:S|H|D|C|NT)|pass)$/;
-    if(!pattern.test(bid)) return false;
-    return true;
 }
 
 let players: Player[] = [];
@@ -87,14 +82,5 @@ res.json(player.hand);
 // Legg inn bud
 app.post('/bid', (req, res) => {
     const { playerId, bid } = req.body;
-
-    // Sjekk om budet faller utenfor det forventede regelsettet
-    if (!isBidValid(bid)) {
-        // Hvis budet ikke er gyldig, be om forklaring fra makkeren
-        //waitForExplanation(playerId);
-        return res.status(200).send("Bid not valid.");
-    }
-
-    // Fortsett med spillets normale flyt
-    res.status(200).send("Bid accepted.");
+    return res.status(200).send(isValidBid(bid));
 });
